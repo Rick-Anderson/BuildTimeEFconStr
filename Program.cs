@@ -6,7 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 //if (Assembly.GetEntryAssembly()?.GetName().Name != "BuildTimeEFconStr")
 //{
     builder.Services.AddDbContext<BuildTimeEFconStrContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("BuildTimeEFconStrContext") ?? throw new InvalidOperationException("Connection string 'BuildTimeEFconStrContext' not found.")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("BuildTimeEFconStrContext") 
+      ?? throw new InvalidOperationException("Connection string 'BuildTimeEFconStrContext' not found.")));
 //}
 
 builder.Services.AddOpenApi();
