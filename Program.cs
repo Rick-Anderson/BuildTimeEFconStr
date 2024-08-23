@@ -1,10 +1,16 @@
-
+using BuildTimeEFconStr.Data;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection;
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddAuthorization();
+//if (Assembly.GetEntryAssembly()?.GetName().Name != "BuildTimeEFconStr")
+//{
+    builder.Services.AddDbContext<BuildTimeEFconStrContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("BuildTimeEFconStrContext") ?? throw new InvalidOperationException("Connection string 'BuildTimeEFconStrContext' not found.")));
+//}
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddOpenApi("v2");
 
 var app = builder.Build();
 
@@ -15,25 +21,42 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
-
 var summaries = new[]
 {
-                "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-            };
+    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+};
 
-app.MapGet("/weatherforecast", (HttpContext httpContext) =>
+app.MapGet("/weatherforecast", () =>
 {
     var forecast = Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
-        {
-            Date = DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            TemperatureC = Random.Shared.Next(-20, 55),
-            Summary = summaries[Random.Shared.Next(summaries.Length)]
-        })
+        (
+            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+            Random.Shared.Next(-20, 55),
+            summaries[Random.Shared.Next(summaries.Length)]
+        ))
         .ToArray();
     return forecast;
 })
 .WithName("GetWeatherForecast");
 
+app.MapGet("/v2/weatherforecast", (HttpContext httpContext) =>
+{
+    var forecast = Enumerable.Range(1, 5).Select(index =>
+        new WeatherForecast
+        (
+            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
+            Random.Shared.Next(-20, 55),
+            summaries[Random.Shared.Next(summaries.Length)]
+        ))
+        .ToArray();
+    return forecast;
+})
+.WithGroupName("v2");
+
 app.Run();
+
+record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
+{
+    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
+}
